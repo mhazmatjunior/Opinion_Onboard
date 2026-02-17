@@ -14,10 +14,6 @@ export default function PublicLayout({
             <footer className="bg-background border-t border-border py-8 mt-12">
                 <div className="container-custom text-center text-sm text-muted-foreground">
                     <p>&copy; {new Date().getFullYear()} Opinion Onboard. All rights reserved.</p>
-                    <div className="flex justify-center gap-4 mt-4">
-                        <a href="/terms" className="hover:text-foreground">Terms</a>
-                        <a href="/privacy" className="hover:text-foreground">Privacy</a>
-                    </div>
                 </div>
             </footer>
         </div>

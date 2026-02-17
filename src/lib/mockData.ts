@@ -16,6 +16,9 @@ export type Opinion = {
     timestamp: string;
     categoryId: string;
     categoryName?: string;
+    userVote?: "up" | "down" | null;
+    authorId?: string; // Added for reference
+    commentCount?: number;
 };
 
 export const categories: Category[] = [

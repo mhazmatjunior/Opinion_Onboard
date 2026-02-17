@@ -1,15 +1,10 @@
 import { notFound } from "next/navigation";
-import { categories, opinions } from "@/lib/mockData";
 import { CategoryClientPage } from "@/components/pages/CategoryClientPage";
-
-// In Next.js 15+, params is a Promise.
-// But in Next.js 14, params is an object.
-// The user specified Next.js 14+.
-// However, I installed 'create-next-app@latest', which installed Next.js 15+ (15.1.0 in previous step output?). The package.json showed 16.1.6 (Canary? or weird versioning).
-// Actually, `package.json` showed `"next": "16.1.6"`. This is likely Next.js 15.1 or similar, or I should treat params as a Promise to be safe for future.
-// Wait, `next` 16? That doesn't exist yet as stable. Probably 15.
-// In Next 15, `params` should be awaited.
-// I will implement it as async function awaiting params.
+import { db } from "@/db";
+import { categories, opinions } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
+import { cookies } from "next/headers";
+import { auth } from "@/auth";
 
 interface PageProps {
     params: Promise<{ slug: string }>;
@@ -18,19 +13,54 @@ interface PageProps {
 export default async function CategoryPage({ params }: PageProps) {
     const { slug } = await params;
 
-    const category = categories.find((c) => c.slug === slug);
+    const category = await db.query.categories.findFirst({
+        where: eq(categories.slug, slug)
+    });
 
     if (!category) {
         notFound();
     }
 
-    // Filter opinions for this category
-    // In mock data, I have categoryId. I need to map slug -> categoryId or match logic.
-    // Mock data categories have IDs 1-8. Slugs are set.
-    // Mock data opinions have categoryId.
-    // I'll filter by categoryId matching the category.id
+    const categoryOpinions = await db.query.opinions.findMany({
+        where: eq(opinions.categoryId, category.id),
+        orderBy: [desc(opinions.createdAt)],
+        with: {
+            author: true,
+            votes: true,
+            category: true,
+            comments: true
+        }
+    });
 
-    const categoryOpinions = opinions.filter((o) => o.categoryId === category.id);
+    const session = await auth();
+    const userId = session?.user?.id;
 
-    return <CategoryClientPage category={category} opinions={categoryOpinions} />;
+    const formattedOpinions = categoryOpinions.map((op: typeof categoryOpinions[number]) => {
+        const upvotes = op.votes.filter((v) => v.type === 'up').length;
+        const downvotes = op.votes.filter((v) => v.type === 'down').length;
+
+        const userVoteRecord = userId ? op.votes.find((v) => v.userId === userId) : undefined;
+        const userVote = userVoteRecord ? userVoteRecord.type as "up" | "down" : null;
+
+        return {
+            id: op.id,
+            content: op.content,
+            isAnonymous: op.isAnonymous,
+            authorName: op.isAnonymous ? "Anonymous" : op.author.name,
+            voteScore: upvotes - downvotes,
+            timestamp: new Date(op.createdAt).toLocaleDateString(),
+            categoryId: op.category.id, // Should match category.id
+            categoryName: op.category.name,
+            authorId: op.author.id,
+            userVote,
+            commentCount: op.comments.length
+        };
+    }).sort((a, b) => b.voteScore - a.voteScore);
+
+    const categoryWithCount = {
+        ...category,
+        opinionCount: categoryOpinions.length
+    };
+
+    return <CategoryClientPage category={categoryWithCount} opinions={formattedOpinions} />;
 }

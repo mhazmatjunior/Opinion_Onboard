@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, List, Flag, ShieldAlert, LogOut } from "lucide-react";
+import { LayoutDashboard, List, Flag, ShieldAlert, LogOut, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 
 export function AdminSidebar() {
     const pathname = usePathname();
+    const { logout } = useAuth();
 
     const links = [
         { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -18,7 +20,7 @@ export function AdminSidebar() {
     const isActive = (path: string) => pathname === path;
 
     return (
-        <div className="w-64 bg-background border-r border-border h-screen flex flex-col sticky top-0 hidden md:flex">
+        <div className="w-64 bg-background border-r border-border h-screen flex flex-col sticky top-0 hidden md:flex shrink-0">
             <div className="h-16 flex items-center px-6 border-b border-border">
                 <Link href="/admin/dashboard" className="flex items-center gap-2">
                     <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
@@ -49,8 +51,18 @@ export function AdminSidebar() {
                 })}
             </div>
 
-            <div className="p-4 border-t border-border">
-                <button className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-muted-foreground hover:text-danger hover:bg-danger/10 transition-colors w-full">
+            <div className="p-4 border-t border-border space-y-1">
+                <Link
+                    href="/"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors w-full"
+                >
+                    <Home className="w-5 h-5" />
+                    Back to Home
+                </Link>
+                <button
+                    onClick={() => logout()}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-muted-foreground hover:text-danger hover:bg-danger/10 transition-colors w-full text-left"
+                >
                     <LogOut className="w-5 h-5" />
                     Logout
                 </button>

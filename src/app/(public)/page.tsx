@@ -2,13 +2,68 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { CategoryCard } from "@/components/ui/CategoryCard";
 import { OpinionCard } from "@/components/ui/OpinionCard";
-import { categories, opinions } from "@/lib/mockData";
+import { db } from "@/db";
+import { categories, opinions } from "@/db/schema";
+import { desc } from "drizzle-orm";
+import { cookies } from "next/headers";
+import { RecentOpinionsClient } from "@/components/home/RecentOpinionsClient";
+import { auth } from "@/auth";
 
-export default function HomePage() {
-    const featuredCategories = categories.slice(0, 6);
-    const popularOpinions = opinions
-        .sort((a, b) => b.voteScore - a.voteScore)
-        .slice(0, 5);
+export const dynamic = 'force-dynamic';
+
+export default async function HomePage() {
+    // Fetch Categories
+    const categoriesData = await db.query.categories.findMany({
+        limit: 6,
+        with: {
+            opinions: true
+        }
+    });
+
+    const featuredCategories = categoriesData.map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        slug: c.slug,
+        description: c.description,
+        opinionCount: c.opinions.length
+    }));
+
+    // Fetch Recent Opinions
+    const opinionsData = await db.query.opinions.findMany({
+        limit: 5,
+        orderBy: [desc(opinions.createdAt)],
+        with: {
+            author: true,
+            category: true,
+            votes: true,
+            comments: true
+        }
+    });
+
+    const session = await auth();
+    const userId = session?.user?.id;
+
+    const popularOpinions = opinionsData.map((op: any) => {
+        const upvotes = op.votes.filter((v: any) => v.type === 'up').length;
+        const downvotes = op.votes.filter((v: any) => v.type === 'down').length;
+
+        const userVoteRecord = userId ? op.votes.find((v: any) => v.userId === userId) : undefined;
+        const userVote = userVoteRecord ? userVoteRecord.type as "up" | "down" : null;
+
+        return {
+            id: op.id,
+            content: op.content,
+            isAnonymous: op.isAnonymous,
+            authorName: op.isAnonymous ? "Anonymous" : op.author.name,
+            voteScore: upvotes - downvotes,
+            timestamp: new Date(op.createdAt).toLocaleDateString(), // Simple formatting
+            categoryId: op.category.id,
+            categoryName: op.category.name,
+            authorId: op.author.id,
+            userVote,
+            commentCount: op.comments.length
+        };
+    }).sort((a: any, b: any) => b.voteScore - a.voteScore);
 
     return (
         <div className="pb-12">
@@ -30,7 +85,7 @@ export default function HomePage() {
                             <ArrowRight className="w-5 h-5" />
                         </Link>
                         <Link
-                            href="/signup"
+                            href="/login"
                             className="px-8 py-3 rounded-lg font-medium text-lg border border-border bg-card hover:bg-muted transition-colors text-foreground"
                         >
                             Start Writing
@@ -48,7 +103,7 @@ export default function HomePage() {
                     </Link>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {featuredCategories.map((category) => (
+                    {featuredCategories.map((category: any) => (
                         <CategoryCard key={category.id} category={category} />
                     ))}
                 </div>
@@ -57,12 +112,10 @@ export default function HomePage() {
             {/* Popular Opinions */}
             <section className="bg-muted/30 py-16">
                 <div className="container-custom max-w-4xl">
-                    <h2 className="text-2xl font-bold tracking-tight mb-8">Trending Opinions</h2>
-                    <div className="space-y-6">
-                        {popularOpinions.map((opinion) => (
-                            <OpinionCard key={opinion.id} opinion={opinion} />
-                        ))}
-                    </div>
+                    <h2 className="text-2xl font-bold tracking-tight mb-8">Recent Opinions</h2>
+
+                    <RecentOpinionsClient opinions={popularOpinions} />
+
                     <div className="mt-10 text-center">
                         <Link
                             href="/categories"

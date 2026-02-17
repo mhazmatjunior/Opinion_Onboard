@@ -1,21 +1,41 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Menu, X, LogIn } from "lucide-react";
+import { LogIn, User, LogOut, LayoutDashboard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 
 export function Navigation() {
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
     const pathname = usePathname();
+    const { user, loading, logout } = useAuth();
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setIsUserMenuOpen(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     const navLinks = [
         { href: "/categories", label: "Categories" },
-        { href: "/about", label: "About" }, // Placeholder as not in updated reqs specifically but in prompt text ("Links: Categories, About")
+        { href: "/about", label: "About" },
     ];
 
     const isActive = (path: string) => pathname === path;
+
+    const getLoginLink = () => {
+        if (pathname.startsWith("/login")) {
+            return "/login";
+        }
+        return `/login?redirect=${encodeURIComponent(pathname)}`;
+    };
 
     return (
         <nav className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md border-b border-border">
@@ -28,83 +48,124 @@ export function Navigation() {
                     <span className="font-bold text-lg tracking-tight hidden sm:block">Opinion Onboard</span>
                 </Link>
 
-                {/* Desktop Nav */}
-                <div className="hidden md:flex items-center gap-8">
+                {/* Desktop & Mobile Nav - Centered */}
+                <div className="flex-1 flex items-center justify-center gap-4 sm:gap-8 mx-4">
                     {navLinks.map((link) => (
                         <Link
                             key={link.href}
                             href={link.href}
                             className={cn(
-                                "text-sm font-medium transition-colors hover:text-primary",
+                                "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap",
                                 isActive(link.href) ? "text-primary" : "text-muted-foreground"
                             )}
                         >
                             {link.label}
                         </Link>
                     ))}
+                    {user?.role === 'admin' && (
+                        <Link
+                            href="/admin/dashboard"
+                            className={cn(
+                                "text-sm font-medium transition-colors hover:text-primary whitespace-nowrap hidden sm:block",
+                                isActive("/admin/dashboard") ? "text-primary" : "text-muted-foreground"
+                            )}
+                        >
+                            Admin
+                        </Link>
+                    )}
                 </div>
 
-                {/* Auth Buttons */}
-                <div className="hidden md:flex items-center gap-4">
-                    <Link
-                        href="/login"
-                        className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                        Log in
-                    </Link>
-                    <Link
-                        href="/signup"
-                        className="bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm"
-                    >
-                        Sign up
-                    </Link>
-                </div>
-
-                {/* Mobile Menu Toggle */}
-                <button
-                    className="md:hidden p-2 text-muted-foreground hover:text-foreground"
-                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                    aria-label="Toggle menu"
-                >
-                    {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-                </button>
-            </div>
-
-            {/* Mobile Menu */}
-            {isMobileMenuOpen && (
-                <div className="md:hidden border-t border-border bg-background p-4 space-y-4 animate-in slide-in-from-top-2">
-                    <div className="flex flex-col gap-4">
-                        {navLinks.map((link) => (
-                            <Link
-                                key={link.href}
-                                href={link.href}
-                                onClick={() => setIsMobileMenuOpen(false)}
-                                className={cn(
-                                    "text-sm font-medium p-2 rounded-md hover:bg-muted transition-colors",
-                                    isActive(link.href) ? "text-primary bg-muted/50" : "text-muted-foreground"
+                {/* Right Section: Mobile Icon Menu vs Desktop Buttons */}
+                <div className="relative flex items-center gap-4" ref={menuRef}>
+                    {!loading && (
+                        <>
+                            {/* Mobile User Menu Icon (Visible only on small screens) */}
+                            <div className="sm:hidden">
+                                {user ? (
+                                    <button
+                                        onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                                        className={cn(
+                                            "w-10 h-10 rounded-full flex items-center justify-center transition-all border-2",
+                                            "bg-primary text-primary-foreground border-primary shadow-md"
+                                        )}
+                                        aria-label="User menu"
+                                    >
+                                        <User className="w-5 h-5" />
+                                    </button>
+                                ) : (
+                                    <Link
+                                        href={getLoginLink()}
+                                        className={cn(
+                                            "w-10 h-10 rounded-full flex items-center justify-center transition-all border-2",
+                                            "bg-white text-muted-foreground border-border hover:border-primary shadow-sm"
+                                        )}
+                                        aria-label="Login"
+                                    >
+                                        <User className="w-5 h-5" />
+                                    </Link>
                                 )}
+                            </div>
+
+                            {/* Desktop Buttons (Visible only on sm and up) */}
+                            <div className="hidden sm:flex items-center gap-4">
+                                {user ? (
+                                    <>
+                                        <span className="text-sm font-medium text-muted-foreground truncate max-w-[120px]">Hi, {user.name}</span>
+                                        <button
+                                            onClick={() => logout()}
+                                            className="text-sm font-medium text-muted-foreground hover:text-red-500 transition-colors flex items-center gap-1"
+                                        >
+                                            <LogOut className="w-4 h-4" />
+                                            Logout
+                                        </button>
+                                    </>
+                                ) : (
+                                    <Link
+                                        href={getLoginLink()}
+                                        className="bg-primary text-primary-foreground px-5 py-2 rounded-full text-sm font-medium hover:bg-primary/90 transition-all shadow-md active:scale-95"
+                                    >
+                                        Get Started
+                                    </Link>
+                                )}
+                            </div>
+                        </>
+                    )}
+
+                    {/* Mobile Only Dropdown */}
+                    {isUserMenuOpen && user && (
+                        <div className="sm:hidden absolute right-0 mt-2 w-56 bg-card border border-border rounded-lg shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2">
+                            <div className="px-4 py-2 border-b border-border mb-1">
+                                <p className="text-xs text-muted-foreground">Signed in as</p>
+                                <p className="text-sm font-semibold truncate">{user.name}</p>
+                            </div>
+
+                            {user.role === 'admin' && (
+                                <Link
+                                    href="/admin/dashboard"
+                                    onClick={() => setIsUserMenuOpen(false)}
+                                    className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors text-foreground"
+                                >
+                                    <LayoutDashboard className="w-4 h-4 text-primary" />
+                                    Admin Dashboard
+                                </Link>
+                            )}
+
+                            <button
+                                onClick={() => {
+                                    logout();
+                                    setIsUserMenuOpen(false);
+                                }}
+                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors text-left"
                             >
-                                {link.label}
-                            </Link>
-                        ))}
-                        <div className="h-px bg-border my-2" />
-                        <Link
-                            href="/login"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                            className="px-4 py-2 rounded-md text-sm font-medium hover:bg-muted transition-colors text-center"
-                        >
-                            Log in
-                        </Link>
-                        <Link
-                            href="/signup"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                            className="bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90 transition-colors text-center shadow-sm"
-                        >
-                            Sign up
-                        </Link>
-                    </div>
+                                <LogOut className="w-4 h-4" />
+                                Logout
+                            </button>
+                        </div>
+                    )}
                 </div>
-            )}
+            </div>
         </nav>
     );
 }
+
+

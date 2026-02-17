@@ -12,12 +12,30 @@ interface CategoryClientPageProps {
     opinions: Opinion[];
 }
 
+import { useAuth } from "@/context/AuthContext";
+import { useRouter, usePathname } from "next/navigation";
+
 export function CategoryClientPage({ category, opinions }: CategoryClientPageProps) {
     const [isPostModalOpen, setIsPostModalOpen] = useState(false);
     const [isReportModalOpen, setIsReportModalOpen] = useState(false);
     const [reportingOpinionId, setReportingOpinionId] = useState<string | null>(null);
+    const { user } = useAuth();
+    const router = useRouter();
+    const pathname = usePathname();
+
+    const handlePostClick = () => {
+        if (!user) {
+            router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
+            return;
+        }
+        setIsPostModalOpen(true);
+    };
 
     const handleReport = (opinionId: string) => {
+        if (!user) {
+            router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
+            return;
+        }
         setReportingOpinionId(opinionId);
         setIsReportModalOpen(true);
     };
@@ -31,7 +49,7 @@ export function CategoryClientPage({ category, opinions }: CategoryClientPagePro
                     <p className="text-muted-foreground text-lg">{category.description}</p>
                 </div>
                 <button
-                    onClick={() => setIsPostModalOpen(true)}
+                    onClick={handlePostClick}
                     className="shrink-0 bg-primary text-primary-foreground px-5 py-2.5 rounded-lg font-medium flex items-center gap-2 hover:bg-primary/90 transition-shadow shadow-sm"
                 >
                     <Plus className="w-5 h-5" />
@@ -61,6 +79,7 @@ export function CategoryClientPage({ category, opinions }: CategoryClientPagePro
                 isOpen={isPostModalOpen}
                 onClose={() => setIsPostModalOpen(false)}
                 categoryName={category.name}
+                categoryId={category.id}
             />
 
             <ReportModal
@@ -69,6 +88,7 @@ export function CategoryClientPage({ category, opinions }: CategoryClientPagePro
                     setIsReportModalOpen(false);
                     setReportingOpinionId(null);
                 }}
+                opinionId={reportingOpinionId}
             />
         </div>
     );
