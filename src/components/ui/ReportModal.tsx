@@ -8,9 +8,10 @@ interface ReportModalProps {
     isOpen: boolean;
     onClose: () => void;
     opinionId?: string | null;
+    commentId?: string | null;
 }
 
-export function ReportModal({ isOpen, onClose, opinionId }: ReportModalProps) {
+export function ReportModal({ isOpen, onClose, opinionId, commentId }: ReportModalProps) {
     const [reason, setReason] = useState("spam");
     const [details, setDetails] = useState("");
     const [loading, setLoading] = useState(false);
@@ -30,6 +31,7 @@ export function ReportModal({ isOpen, onClose, opinionId }: ReportModalProps) {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     opinionId,
+                    commentId,
                     reason,
                     details
                 })
@@ -108,7 +110,7 @@ export function ReportModal({ isOpen, onClose, opinionId }: ReportModalProps) {
                         <div className="p-2 bg-danger/10 rounded-full text-danger hidden sm:block">
                             <Flag className="w-5 h-5" />
                         </div>
-                        <h2 className="text-xl font-semibold">Report Opinion</h2>
+                        <h2 className="text-xl font-semibold">Report {commentId ? "Comment" : "Opinion"}</h2>
                     </div>
                     <button
                         onClick={onClose}
@@ -120,7 +122,7 @@ export function ReportModal({ isOpen, onClose, opinionId }: ReportModalProps) {
 
                 <div className="p-6 space-y-4">
                     <p className="text-sm text-muted-foreground">
-                        Thank you for helping keep our community safe. Please tell us why you are reporting this opinion.
+                        Thank you for helping keep our community safe. Please tell us why you are reporting this {commentId ? "comment" : "opinion"}.
                     </p>
 
                     {error && (

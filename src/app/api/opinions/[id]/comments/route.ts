@@ -7,6 +7,7 @@ import { z } from "zod";
 
 const commentSchema = z.object({
     content: z.string().min(1, "Comment cannot be empty").max(500, "Comment is too long"),
+    isAnonymous: z.boolean().optional(),
 });
 
 export async function GET(
@@ -24,11 +25,12 @@ export async function GET(
             }
         });
 
-        const formattedComments = opinionComments.map(c => ({
+        const formattedComments = (opinionComments as any[]).map(c => ({
             id: c.id,
             content: c.content,
-            authorName: c.author.name,
+            authorName: c.isAnonymous ? "Anonymous" : (c.author.name || "Unknown"),
             authorId: c.author.id,
+            isAnonymous: c.isAnonymous,
             createdAt: c.createdAt,
         }));
 
@@ -58,12 +60,13 @@ export async function POST(
 
     try {
         const body = await request.json();
-        const { content } = commentSchema.parse(body);
+        const { content, isAnonymous } = commentSchema.parse(body);
 
         const newComment = await db.insert(comments).values({
             content,
             opinionId,
             authorId: userId,
+            isAnonymous: !!isAnonymous,
         }).returning();
 
         return NextResponse.json(newComment[0]);

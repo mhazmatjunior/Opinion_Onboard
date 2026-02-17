@@ -97,7 +97,7 @@ export function OpinionCard({ opinion, className, onReport }: OpinionCardProps) 
                         <span className="hidden sm:inline">Share</span>
                     </button>
 
-                    <div className="relative ml-auto sm:ml-0">
+                    <div className="relative ml-auto">
                         <button
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
                             className="p-1 hover:bg-muted rounded-full transition-colors text-muted-foreground flex items-center gap-1"

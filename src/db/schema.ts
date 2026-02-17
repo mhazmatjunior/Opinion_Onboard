@@ -92,6 +92,7 @@ export const votes = pgTable("votes", {
 export const reports = pgTable("reports", {
     id: uuid("id").defaultRandom().primaryKey(),
     opinionId: uuid("opinion_id").references(() => opinions.id, { onDelete: "cascade" }).notNull(),
+    commentId: uuid("comment_id").references(() => comments.id, { onDelete: "cascade" }), // Added for comment reports
     reporterId: uuid("reporter_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
     reason: text("reason").notNull(),
     details: text("details"),
@@ -104,6 +105,7 @@ export const comments = pgTable("comments", {
     content: text("content").notNull(),
     opinionId: uuid("opinion_id").references(() => opinions.id, { onDelete: "cascade" }).notNull(),
     authorId: uuid("author_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+    isAnonymous: boolean("is_anonymous").default(false).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -148,6 +150,10 @@ export const reportsRelations = relations(reports, ({ one }) => ({
     opinion: one(opinions, {
         fields: [reports.opinionId],
         references: [opinions.id],
+    }),
+    comment: one(comments, {
+        fields: [reports.commentId],
+        references: [comments.id],
     }),
     reporter: one(users, {
         fields: [reports.reporterId],

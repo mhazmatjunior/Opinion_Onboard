@@ -6,6 +6,7 @@ import { z } from "zod";
 
 const reportSchema = z.object({
     opinionId: z.string(),
+    commentId: z.string().optional(),
     reason: z.string(),
     details: z.string().optional(),
 });
@@ -23,11 +24,12 @@ export async function POST(request: Request) {
 
     try {
         const body = await request.json();
-        const { opinionId, reason, details } = reportSchema.parse(body);
+        const { opinionId, commentId, reason, details } = reportSchema.parse(body);
 
         await db.insert(reports).values({
             reporterId: userId,
             opinionId,
+            commentId,
             reason,
             details: details || "",
             status: "pending"
