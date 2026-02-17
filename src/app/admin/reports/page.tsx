@@ -36,21 +36,21 @@ export default async function AdminReportsPage() {
         }
     });
 
-    const groupedReports = reportsData.reduce<Record<string, GroupedReport>>((acc, report) => {
+    const groupedReports = reportsData.reduce<Record<string, GroupedReport>>((acc, report: any) => {
         if (!acc[report.opinionId]) {
             acc[report.opinionId] = {
                 opinionId: report.opinionId,
                 opinionContent: report.opinion.content,
                 opinionIsAnonymous: report.opinion.isAnonymous,
                 opinionAuthorId: report.opinion.authorId,
-                opinionAuthorName: report.opinion.author.name,
+                opinionAuthorName: report.opinion.author.name ?? "Unknown",
                 reports: [],
                 status: 'pending'
             };
         }
         acc[report.opinionId].reports.push({
             id: report.id,
-            reporter: report.reporter.name,
+            reporter: report.reporter.name ?? "Unknown",
             reason: report.reason,
             details: report.details,
             timestamp: new Date(report.createdAt).toLocaleString(),
@@ -60,7 +60,7 @@ export default async function AdminReportsPage() {
         return acc;
     }, {});
 
-    const aggregatedReports = Object.values(groupedReports);
+    const aggregatedReports = Object.values(groupedReports) as GroupedReport[];
 
     return (
         <div className="space-y-6">
