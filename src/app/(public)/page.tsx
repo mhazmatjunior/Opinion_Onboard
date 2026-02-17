@@ -3,7 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { CategoryCard } from "@/components/ui/CategoryCard";
 import { OpinionCard } from "@/components/ui/OpinionCard";
 import { db } from "@/db";
-import { categories, opinions } from "@/db/schema";
+import { categories, opinions as OpinionsTable } from "@/db/schema";
 import { desc } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { RecentOpinionsClient } from "@/components/home/RecentOpinionsClient";
@@ -31,7 +31,7 @@ export default async function HomePage() {
     // Fetch Recent Opinions
     const opinionsData = await db.query.opinions.findMany({
         limit: 5,
-        orderBy: [desc(opinions.createdAt)],
+        orderBy: [desc(OpinionsTable.createdAt)],
         with: {
             author: true,
             category: true,
