@@ -15,7 +15,6 @@ type User = {
 type AuthContextType = {
     user: User | null;
     loading: boolean;
-    loading: boolean;
     login: (provider: string, callbackUrl?: string) => Promise<void>;
     logout: () => Promise<void>;
 };
