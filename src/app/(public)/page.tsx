@@ -54,7 +54,7 @@ export default async function HomePage() {
             id: op.id,
             content: op.content,
             isAnonymous: op.isAnonymous,
-            authorName: op.isAnonymous ? "Anonymous" : op.author.name,
+            authorName: op.isAnonymous ? "Anonymous" : (op.author.name ?? undefined),
             voteScore: upvotes - downvotes,
             timestamp: new Date(op.createdAt).toLocaleDateString(), // Simple formatting
             categoryId: op.category.id,

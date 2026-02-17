@@ -46,7 +46,7 @@ export default async function CategoryPage({ params }: PageProps) {
             id: op.id,
             content: op.content,
             isAnonymous: op.isAnonymous,
-            authorName: op.isAnonymous ? "Anonymous" : op.author.name,
+            authorName: op.isAnonymous ? "Anonymous" : (op.author.name ?? undefined),
             voteScore: upvotes - downvotes,
             timestamp: new Date(op.createdAt).toLocaleDateString(),
             categoryId: op.category.id, // Should match category.id

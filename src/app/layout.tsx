@@ -14,6 +14,9 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Opinion Onboard",
   description: "Share opinions that matter. Anonymous or named - your voice, your choice.",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
