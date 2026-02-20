@@ -6,12 +6,14 @@ import { cn } from "@/lib/utils";
 interface ConfirmationModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onConfirm: () => void;
+    onConfirm: () => void | Promise<void>;
     title: string;
-    message: string;
+    message?: string;
+    description?: string; // Alias for compatibility
     confirmText?: string;
     cancelText?: string;
     isLoading?: boolean;
+    loading?: boolean; // Alias for compatibility
     variant?: "danger" | "warning" | "info";
 }
 
@@ -21,12 +23,17 @@ export function ConfirmationModal({
     onConfirm,
     title,
     message,
+    description,
     confirmText = "Confirm",
     cancelText = "Cancel",
     isLoading = false,
+    loading = false,
     variant = "danger"
 }: ConfirmationModalProps) {
     if (!isOpen) return null;
+
+    const displayMessage = message || description;
+    const isWorking = isLoading || loading;
 
     const variantStyles = {
         danger: "bg-danger text-white hover:bg-danger/90",
@@ -67,7 +74,7 @@ export function ConfirmationModal({
 
                 <div className="p-6">
                     <p className="text-muted-foreground leading-relaxed">
-                        {message}
+                        {displayMessage}
                     </p>
                 </div>
 
@@ -75,19 +82,19 @@ export function ConfirmationModal({
                     <button
                         onClick={onClose}
                         className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                        disabled={isLoading}
+                        disabled={isWorking}
                     >
                         {cancelText}
                     </button>
                     <button
                         onClick={onConfirm}
-                        disabled={isLoading}
+                        disabled={isWorking}
                         className={cn(
                             "px-4 py-2 rounded-md text-sm font-medium transition-colors shadow-sm disabled:opacity-50",
                             variantStyles[variant]
                         )}
                     >
-                        {isLoading ? "Processing..." : confirmText}
+                        {isWorking ? "Processing..." : confirmText}
                     </button>
                 </div>
             </div>
