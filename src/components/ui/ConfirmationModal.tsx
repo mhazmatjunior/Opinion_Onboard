@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { AlertTriangle, X } from "lucide-react";
+import { X, AlertTriangle, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ConfirmationModalProps {
@@ -9,11 +8,11 @@ interface ConfirmationModalProps {
     onClose: () => void;
     onConfirm: () => void;
     title: string;
-    description: string;
+    message: string;
     confirmText?: string;
     cancelText?: string;
+    isLoading?: boolean;
     variant?: "danger" | "warning" | "info";
-    loading?: boolean;
 }
 
 export function ConfirmationModal({
@@ -21,54 +20,46 @@ export function ConfirmationModal({
     onClose,
     onConfirm,
     title,
-    description,
+    message,
     confirmText = "Confirm",
     cancelText = "Cancel",
-    variant = "danger",
-    loading = false,
+    isLoading = false,
+    variant = "danger"
 }: ConfirmationModalProps) {
-    const [isVisible, setIsVisible] = useState(false);
+    if (!isOpen) return null;
 
-    useEffect(() => {
-        if (isOpen) {
-            setIsVisible(true);
-        } else {
-            const timer = setTimeout(() => setIsVisible(false), 200);
-            return () => clearTimeout(timer);
-        }
-    }, [isOpen]);
+    const variantStyles = {
+        danger: "bg-danger text-white hover:bg-danger/90",
+        warning: "bg-amber-500 text-white hover:bg-amber-600",
+        info: "bg-primary text-primary-foreground hover:bg-primary/90"
+    };
 
-    if (!isVisible && !isOpen) return null;
+    const iconStyles = {
+        danger: "bg-danger/10 text-danger",
+        warning: "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400",
+        info: "bg-primary/10 text-primary"
+    };
+
+    const Icon = variant === "danger" ? Trash2 : (variant === "warning" ? AlertTriangle : AlertTriangle);
 
     return (
-        <div className={cn(
-            "fixed inset-0 z-50 flex items-center justify-center p-4 transition-all duration-200",
-            isOpen ? "opacity-100" : "opacity-0"
-        )}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div
-                className="absolute inset-0 bg-background/80 backdrop-blur-sm"
-                onClick={!loading ? onClose : undefined}
+                className="absolute inset-0 bg-background/80 backdrop-blur-sm transition-opacity"
+                onClick={onClose}
             />
-            <div className={cn(
-                "relative bg-card w-full max-w-md rounded-lg border border-border shadow-lg flex flex-col transition-all duration-200",
-                isOpen ? "scale-100 translate-y-0" : "scale-95 translate-y-4"
-            )}>
+
+            <div className="relative bg-card w-full max-w-md rounded-lg shadow-lg border border-border flex flex-col animate-in fade-in zoom-in-95 duration-200">
                 <div className="flex items-center justify-between p-6 border-b border-border">
-                    <div className="flex items-center gap-3">
-                        <div className={cn(
-                            "p-2 rounded-full",
-                            variant === "danger" && "bg-danger/10 text-danger",
-                            variant === "warning" && "bg-warning/10 text-warning",
-                            variant === "info" && "bg-primary/10 text-primary"
-                        )}>
-                            <AlertTriangle className="w-5 h-5" />
+                    <div className="flex items-center gap-2">
+                        <div className={cn("p-2 rounded-full", iconStyles[variant])}>
+                            <Icon className="w-5 h-5" />
                         </div>
                         <h2 className="text-xl font-semibold">{title}</h2>
                     </div>
                     <button
-                        onClick={!loading ? onClose : undefined}
+                        onClick={onClose}
                         className="p-1 hover:bg-muted rounded-full transition-colors text-muted-foreground hover:text-foreground"
-                        disabled={loading}
                     >
                         <X className="w-5 h-5" />
                     </button>
@@ -76,32 +67,27 @@ export function ConfirmationModal({
 
                 <div className="p-6">
                     <p className="text-muted-foreground leading-relaxed">
-                        {description}
+                        {message}
                     </p>
                 </div>
 
                 <div className="flex items-center justify-end gap-3 p-6 border-t border-border bg-muted/20 rounded-b-lg">
                     <button
-                        type="button"
                         onClick={onClose}
-                        className="px-4 py-2 rounded-md text-sm font-medium hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                        disabled={loading}
+                        className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                        disabled={isLoading}
                     >
                         {cancelText}
                     </button>
                     <button
-                        type="button"
                         onClick={onConfirm}
-                        disabled={loading}
+                        disabled={isLoading}
                         className={cn(
-                            "px-4 py-2 rounded-md text-sm font-medium transition-colors shadow-sm flex items-center gap-2",
-                            variant === "danger" && "bg-danger text-white hover:bg-danger/90",
-                            variant === "warning" && "bg-warning text-white hover:bg-warning/90",
-                            variant === "info" && "bg-primary text-primary-foreground hover:bg-primary/90",
-                            loading && "opacity-50 cursor-not-allowed"
+                            "px-4 py-2 rounded-md text-sm font-medium transition-colors shadow-sm disabled:opacity-50",
+                            variantStyles[variant]
                         )}
                     >
-                        {loading ? "Processing..." : confirmText}
+                        {isLoading ? "Processing..." : confirmText}
                     </button>
                 </div>
             </div>

@@ -105,6 +105,7 @@ export const comments = pgTable("comments", {
     content: text("content").notNull(),
     opinionId: uuid("opinion_id").references(() => opinions.id, { onDelete: "cascade" }).notNull(),
     authorId: uuid("author_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+    parentId: uuid("parent_id"), // Removed self-referencing .references() as it's handled by relations() and can cause inference loops
     isAnonymous: boolean("is_anonymous").default(false).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -132,7 +133,9 @@ export const opinionsRelations = relations(opinions, ({ one, many }) => ({
     }),
     votes: many(votes),
     reports: many(reports),
-    comments: many(comments),
+    comments: many(comments, {
+        relationName: "opinion_comments",
+    }),
 }));
 
 export const votesRelations = relations(votes, ({ one }) => ({
@@ -154,6 +157,7 @@ export const reportsRelations = relations(reports, ({ one }) => ({
     comment: one(comments, {
         fields: [reports.commentId],
         references: [comments.id],
+        relationName: "comment_reports",
     }),
     reporter: one(users, {
         fields: [reports.reporterId],
@@ -161,13 +165,25 @@ export const reportsRelations = relations(reports, ({ one }) => ({
     }),
 }));
 
-export const commentsRelations = relations(comments, ({ one }) => ({
+export const commentsRelations = relations(comments, ({ one, many }) => ({
     opinion: one(opinions, {
         fields: [comments.opinionId],
         references: [opinions.id],
+        relationName: "opinion_comments",
     }),
     author: one(users, {
         fields: [comments.authorId],
         references: [users.id],
+    }),
+    parent: one(comments, {
+        fields: [comments.parentId],
+        references: [comments.id],
+        relationName: "comment_replies",
+    }),
+    replies: many(comments, {
+        relationName: "comment_replies",
+    }),
+    reports: many(reports, {
+        relationName: "comment_reports",
     }),
 }));

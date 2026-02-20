@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
@@ -21,13 +21,17 @@ export function VoteButtons({ score, userVote = null, opinionId, className }: Vo
     const router = useRouter();
     const pathname = usePathname();
 
-    // Sync state with props if they change from server
+    // Use a ref to track the server values we've already synced to
+    const lastSyncedRef = useRef({ score, userVote });
+
+    // Sync state with props only when the server actually sends new data
     useEffect(() => {
-        if (!loading) {
+        if (score !== lastSyncedRef.current.score || userVote !== lastSyncedRef.current.userVote) {
             setCurrentScore(score);
             setCurrentVote(userVote);
+            lastSyncedRef.current = { score, userVote };
         }
-    }, [score, userVote, loading]);
+    }, [score, userVote]);
 
     const handleVote = async (type: "up" | "down") => {
         if (!user) {
