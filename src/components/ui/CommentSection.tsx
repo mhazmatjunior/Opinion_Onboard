@@ -251,6 +251,21 @@ function CommentItem({
     const isReplying = replyingToId === comment.id;
     const isAuthor = user?.id === comment.authorId;
 
+    // Auto-open replies if the hash points to one of them
+    useEffect(() => {
+        if (typeof window !== "undefined" && window.location.hash) {
+            const hash = window.location.hash;
+            // Check if this comment is the target or if any descendant is the target
+            const isDescendantTarget = allComments.some(c =>
+                c.parentId === comment.id && (hash === `#comment-${c.id}` || allComments.some(child => child.parentId === c.id && hash === `#comment-${child.id}`))
+            );
+
+            if (isDescendantTarget) {
+                setIsRepliesOpen(true);
+            }
+        }
+    }, [comment.id, allComments]);
+
     const handleUpdate = async () => {
         if (!editedContent.trim() || editedContent === localContent) {
             setIsEditing(false);
@@ -298,7 +313,7 @@ function CommentItem({
     if (isDeleted) return null;
 
     return (
-        <div className={cn("space-y-3", depth > 0 && "ml-6 border-l border-border/50 pl-4")}>
+        <div id={`comment-${comment.id}`} className={cn("space-y-3 scroll-mt-24", depth > 0 && "ml-6 border-l border-border/50 pl-4")}>
             <div className="flex gap-3 text-sm group relative">
                 <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0 text-muted-foreground">
                     {comment.isAnonymous ? <ShieldCheck className="w-4 h-4 opacity-70" /> : <UserIcon className="w-4 h-4" />}

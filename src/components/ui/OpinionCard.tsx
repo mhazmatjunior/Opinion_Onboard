@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MoreHorizontal, MessageSquare, Share2, Flag, Pencil, Trash2, X, Check } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Opinion } from "@/lib/mockData";
@@ -32,6 +32,13 @@ export function OpinionCard({ opinion, className, onReport }: OpinionCardProps) 
     const { toast } = useToast();
 
     const isAuthor = user?.id === opinion.authorId;
+
+    // Auto-open comments if we are linking to a specific comment
+    useEffect(() => {
+        if (typeof window !== "undefined" && window.location.hash.startsWith("#comment-")) {
+            setIsCommentsOpen(true);
+        }
+    }, []);
 
     const handleShare = async () => {
         const shareUrl = `${window.location.origin}/opinion/${opinion.id}`;

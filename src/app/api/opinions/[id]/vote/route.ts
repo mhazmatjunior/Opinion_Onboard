@@ -4,6 +4,8 @@ import { votes } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { z } from "zod";
+import { triggerNotification } from "@/lib/notifications";
+import { opinions } from "@/db/schema";
 
 const voteSchema = z.object({
     type: z.enum(["up", "down"]),
@@ -55,6 +57,28 @@ export async function POST(
                 opinionId,
                 type
             });
+
+            // --- Notification Logic ---
+            if (type === 'up') {
+                try {
+                    const opinion = await db.query.opinions.findFirst({
+                        where: eq(opinions.id, opinionId),
+                    });
+
+                    if (opinion && opinion.authorId !== userId) {
+                        await triggerNotification({
+                            userId: opinion.authorId,
+                            type: 'upvote',
+                            content: `${session.user.name || 'Someone'} upvoted your opinion: "${opinion.content.substring(0, 30)}..."`,
+                            link: `/opinion/${opinionId}`,
+                        });
+                    }
+                } catch (notifError) {
+                    console.error("Failed to trigger notification for upvote:", notifError);
+                }
+            }
+            // --------------------------
+
             return NextResponse.json({ message: "Vote added", status: "added" });
         }
 

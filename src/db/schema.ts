@@ -5,6 +5,7 @@ import { AdapterAccount } from "next-auth/adapters";
 export const roleEnum = pgEnum("role", ["user", "admin"]);
 export const voteTypeEnum = pgEnum("vote_type", ["up", "down"]);
 export const reportStatusEnum = pgEnum("report_status", ["pending", "reviewed", "dismissed"]);
+export const notificationTypeEnum = pgEnum("notification_type", ["new_opinion", "reply", "upvote"]);
 
 // Tables
 export const users = pgTable("users", {
@@ -110,12 +111,34 @@ export const comments = pgTable("comments", {
     createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const notifications = pgTable("notifications", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+    type: notificationTypeEnum("type").notNull(),
+    content: text("content").notNull(),
+    link: text("link").notNull(),
+    isRead: boolean("is_read").default(false).notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+
+export const pushSubscriptions = pgTable("push_subscriptions", {
+    userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).primaryKey(),
+    subscription: text("subscription").notNull(), // JSON stringified PushSubscription
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Relations
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ many, one }) => ({
     opinions: many(opinions),
     votes: many(votes),
     reports: many(reports),
     comments: many(comments),
+    notifications: many(notifications),
+    pushSubscription: one(pushSubscriptions, {
+        fields: [users.id],
+        references: [pushSubscriptions.userId],
+    }),
 }));
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
@@ -185,5 +208,20 @@ export const commentsRelations = relations(comments, ({ one, many }) => ({
     }),
     reports: many(reports, {
         relationName: "comment_reports",
+    }),
+}));
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+    user: one(users, {
+        fields: [notifications.userId],
+        references: [users.id],
+    }),
+}));
+
+
+export const pushSubscriptionsRelations = relations(pushSubscriptions, ({ one }) => ({
+    user: one(users, {
+        fields: [pushSubscriptions.userId],
+        references: [users.id],
     }),
 }));

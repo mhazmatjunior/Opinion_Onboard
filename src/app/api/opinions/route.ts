@@ -5,6 +5,7 @@ import { eq, desc, and } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { z } from "zod";
 import { auth } from "@/auth";
+import { triggerNotification } from "@/lib/notifications";
 
 const postOpinionSchema = z.object({
     content: z.string().min(5).max(500),
@@ -108,6 +109,32 @@ export async function POST(request: Request) {
             authorId: userId,
             isAnonymous,
         }).returning();
+
+        // --- Notification Logic ---
+        try {
+            // Find category name for the notification content
+            const category = await db.query.categories.findFirst({
+                where: eq(categories.id, categoryId),
+            });
+
+            // For now, notify all users EXCEPT the author (In a real app, this would be a filtered list or subscription-based)
+            const allUsers = await db.query.users.findMany({
+                where: (u, { ne }) => ne(u.id, userId),
+                limit: 10, // Limit for safety in this demo/test phase
+            });
+
+            for (const recipient of allUsers) {
+                await triggerNotification({
+                    userId: recipient.id,
+                    type: 'new_opinion',
+                    content: `New opinion in ${category?.name || 'a category'}: "${content.substring(0, 30)}..."`,
+                    link: `/opinion/${newOpinion.id}`,
+                });
+            }
+        } catch (notifError) {
+            console.error("Failed to trigger notification for new opinion:", notifError);
+        }
+        // --------------------------
 
         return NextResponse.json(newOpinion);
     } catch (error) {

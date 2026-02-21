@@ -8,7 +8,7 @@ import { cookies } from "next/headers";
 import { RecentOpinionsClient } from "@/components/home/RecentOpinionsClient"; // Reusing for report logic
 
 interface PageProps {
-    params: { id: string };
+    params: Promise<{ id: string }>;
 }
 
 export const dynamic = 'force-dynamic';
@@ -31,7 +31,8 @@ async function getOpinion(id: string) {
 }
 
 export async function generateMetadata({ params }: PageProps) {
-    const opinion = await getOpinion(params.id);
+    const { id } = await params;
+    const opinion = await getOpinion(id);
 
     if (!opinion) {
         return {
@@ -59,7 +60,8 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export default async function OpinionPage({ params }: PageProps) {
-    const opinion = await getOpinion(params.id);
+    const { id } = await params;
+    const opinion = await getOpinion(id);
 
     if (!opinion) {
         notFound();

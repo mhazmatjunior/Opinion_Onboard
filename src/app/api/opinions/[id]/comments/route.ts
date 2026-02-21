@@ -4,6 +4,8 @@ import { comments } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { z } from "zod";
+import { triggerNotification } from "@/lib/notifications";
+import { opinions } from "@/db/schema";
 
 const commentSchema = z.object({
     content: z.string().min(1, "Comment cannot be empty").max(500, "Comment is too long"),
@@ -71,6 +73,42 @@ export async function POST(
             isAnonymous: !!isAnonymous,
             parentId: parentId || null,
         }).returning();
+
+        // --- Notification Logic ---
+        try {
+            if (parentId) {
+                // It's a reply: Notify the parent comment author
+                const parentComment = await db.query.comments.findFirst({
+                    where: eq(comments.id, parentId),
+                });
+
+                if (parentComment && parentComment.authorId !== userId) {
+                    await triggerNotification({
+                        userId: parentComment.authorId,
+                        type: 'reply',
+                        content: `${session.user.name || 'Someone'} replied to your comment: "${content.substring(0, 30)}..."`,
+                        link: `/opinion/${opinionId}#comment-${newComment[0].id}`,
+                    });
+                }
+            } else {
+                // It's a top-level comment: Notify the opinion author
+                const opinion = await db.query.opinions.findFirst({
+                    where: eq(opinions.id, opinionId),
+                });
+
+                if (opinion && opinion.authorId !== userId) {
+                    await triggerNotification({
+                        userId: opinion.authorId,
+                        type: 'reply',
+                        content: `${session.user.name || 'Someone'} commented on your opinion: "${content.substring(0, 30)}..."`,
+                        link: `/opinion/${opinionId}#comment-${newComment[0].id}`,
+                    });
+                }
+            }
+        } catch (notifError) {
+            console.error("Failed to trigger notification for comment:", notifError);
+        }
+        // --------------------------
 
         return NextResponse.json(newComment[0]);
     } catch (error) {

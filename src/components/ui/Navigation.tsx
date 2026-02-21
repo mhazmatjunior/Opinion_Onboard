@@ -6,6 +6,7 @@ import { LogIn, User, LogOut, LayoutDashboard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { NotificationCenter } from "./NotificationCenter";
 
 export function Navigation() {
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -101,10 +102,16 @@ export function Navigation() {
                                         )}
                                         aria-label="Login"
                                     >
-                                        <User className="w-5 h-5" />
                                     </Link>
                                 )}
                             </div>
+
+                            {/* Notifications (Visible for all logged in users) */}
+                            {user && (
+                                <div className="flex items-center">
+                                    <NotificationCenter />
+                                </div>
+                            )}
 
                             {/* Desktop Buttons (Visible only on sm and up) */}
                             <div className="hidden sm:flex items-center gap-4">
