@@ -1,7 +1,8 @@
 export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
 export const revalidate = 0;
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { comments, opinions } from "@/db/schema";
@@ -17,13 +18,19 @@ const commentSchema = z.object({
 });
 
 export async function GET(
-    request: Request,
-    { params }: { params: Promise<{ id: string }> }
+    request: NextRequest,
+    context: { params: Promise<{ id: string }> }
 ) {
+    // Explicitly force dynamic behavior at the start
     await headers();
-    const { id: opinionId } = await params;
 
     try {
+        const { id: opinionId } = await context.params;
+
+        if (!opinionId) {
+            return NextResponse.json({ error: "Missing ID" }, { status: 400 });
+        }
+
         const opinionComments = await db.query.comments.findMany({
             where: eq(comments.opinionId, opinionId),
             orderBy: [desc(comments.createdAt)],
@@ -50,8 +57,8 @@ export async function GET(
 }
 
 export async function POST(
-    request: Request,
-    { params }: { params: Promise<{ id: string }> }
+    request: NextRequest,
+    context: { params: Promise<{ id: string }> }
 ) {
     await headers();
     const session = await auth();
@@ -60,10 +67,9 @@ export async function POST(
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = session.user.id;
-    const { id: opinionId } = await params;
-
     try {
+        const { id: opinionId } = await context.params;
+        const userId = session.user.id;
         const body = await request.json();
         const { content, isAnonymous, parentId } = commentSchema.parse(body);
 
@@ -78,7 +84,6 @@ export async function POST(
         // --- Notification Logic ---
         try {
             if (parentId) {
-                // It's a reply: Notify the parent comment author
                 const parentComment = await db.query.comments.findFirst({
                     where: eq(comments.id, parentId),
                 });
@@ -92,7 +97,6 @@ export async function POST(
                     });
                 }
             } else {
-                // It's a top-level comment: Notify the opinion author
                 const opinion = await db.query.opinions.findFirst({
                     where: eq(opinions.id, opinionId),
                 });

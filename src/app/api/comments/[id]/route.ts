@@ -1,4 +1,9 @@
-import { NextResponse } from "next/server";
+export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
+export const revalidate = 0;
+
+import { NextRequest, NextResponse } from "next/server";
+import { headers } from "next/headers";
 import { db } from "@/db";
 import { comments } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
@@ -10,18 +15,18 @@ const updateCommentSchema = z.object({
 });
 
 export async function PATCH(
-    request: Request,
-    { params }: { params: Promise<{ id: string }> }
+    request: NextRequest,
+    context: { params: Promise<{ id: string }> }
 ) {
+    await headers();
     const session = await auth();
     if (!session || !session.user?.id) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id: commentId } = await params;
-    const userId = session.user.id;
-
     try {
+        const { id: commentId } = await context.params;
+        const userId = session.user.id;
         const body = await request.json();
         const { content } = updateCommentSchema.parse(body);
 
@@ -45,18 +50,19 @@ export async function PATCH(
 }
 
 export async function DELETE(
-    request: Request,
-    { params }: { params: Promise<{ id: string }> }
+    request: NextRequest,
+    context: { params: Promise<{ id: string }> }
 ) {
+    await headers();
     const session = await auth();
     if (!session || !session.user?.id) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id: commentId } = await params;
-    const userId = session.user.id;
-
     try {
+        const { id: commentId } = await context.params;
+        const userId = session.user.id;
+
         const result = await db
             .delete(comments)
             .where(and(eq(comments.id, commentId), eq(comments.authorId, userId)))
