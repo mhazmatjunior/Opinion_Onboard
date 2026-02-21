@@ -43,7 +43,7 @@ export default async function HomePage() {
     const session = await auth();
     const userId = session?.user?.id;
 
-    const popularOpinions = opinionsData.map((op: any) => {
+    const formattedOpinions = opinionsData.map((op: any) => {
         const upvotes = op.votes.filter((v: any) => v.type === 'up').length;
         const downvotes = op.votes.filter((v: any) => v.type === 'down').length;
 
@@ -56,14 +56,14 @@ export default async function HomePage() {
             isAnonymous: op.isAnonymous,
             authorName: op.isAnonymous ? "Anonymous" : (op.author.name ?? undefined),
             voteScore: upvotes - downvotes,
-            timestamp: new Date(op.createdAt).toLocaleDateString(), // Simple formatting
+            timestamp: op.createdAt.toString(),
             categoryId: op.category.id,
             categoryName: op.category.name,
             authorId: op.author.id,
             userVote,
             commentCount: op.comments.length
         };
-    }).sort((a: any, b: any) => b.voteScore - a.voteScore);
+    });
 
     return (
         <div className="pb-12">
@@ -112,9 +112,9 @@ export default async function HomePage() {
             {/* Popular Opinions */}
             <section className="bg-muted/30 py-16">
                 <div className="container-custom max-w-4xl">
-                    <h2 className="text-2xl font-bold tracking-tight mb-8">Recent Opinions</h2>
+                    <h2 className="text-2xl font-bold tracking-tight mb-8">Opinions</h2>
 
-                    <RecentOpinionsClient opinions={popularOpinions} />
+                    <RecentOpinionsClient opinions={formattedOpinions} />
 
                     <div className="mt-10 text-center">
                         <Link

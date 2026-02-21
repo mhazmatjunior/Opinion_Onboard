@@ -80,6 +80,13 @@ export function Navigation() {
                 <div className="relative flex items-center gap-4" ref={menuRef}>
                     {!loading && (
                         <>
+                            {/* Notifications (Visible for all logged in users) */}
+                            {user && (
+                                <div className="flex items-center">
+                                    <NotificationCenter />
+                                </div>
+                            )}
+
                             {/* Mobile User Menu Icon (Visible only on small screens) */}
                             <div className="sm:hidden">
                                 {user ? (
@@ -102,16 +109,10 @@ export function Navigation() {
                                         )}
                                         aria-label="Login"
                                     >
+                                        <LogIn className="w-5 h-5" />
                                     </Link>
                                 )}
                             </div>
-
-                            {/* Notifications (Visible for all logged in users) */}
-                            {user && (
-                                <div className="flex items-center">
-                                    <NotificationCenter />
-                                </div>
-                            )}
 
                             {/* Desktop Buttons (Visible only on sm and up) */}
                             <div className="hidden sm:flex items-center gap-4">

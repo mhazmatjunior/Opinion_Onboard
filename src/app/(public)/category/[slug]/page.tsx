@@ -35,11 +35,11 @@ export default async function CategoryPage({ params }: PageProps) {
     const session = await auth();
     const userId = session?.user?.id;
 
-    const formattedOpinions = categoryOpinions.map((op: typeof categoryOpinions[number]) => {
-        const upvotes = op.votes.filter((v) => v.type === 'up').length;
-        const downvotes = op.votes.filter((v) => v.type === 'down').length;
+    const formattedOpinions = categoryOpinions.map((op: any) => {
+        const upvotes = op.votes.filter((v: any) => v.type === 'up').length;
+        const downvotes = op.votes.filter((v: any) => v.type === 'down').length;
 
-        const userVoteRecord = userId ? op.votes.find((v) => v.userId === userId) : undefined;
+        const userVoteRecord = userId ? op.votes.find((v: any) => v.userId === userId) : undefined;
         const userVote = userVoteRecord ? userVoteRecord.type as "up" | "down" : null;
 
         return {
@@ -48,14 +48,14 @@ export default async function CategoryPage({ params }: PageProps) {
             isAnonymous: op.isAnonymous,
             authorName: op.isAnonymous ? "Anonymous" : (op.author.name ?? undefined),
             voteScore: upvotes - downvotes,
-            timestamp: new Date(op.createdAt).toLocaleDateString(),
-            categoryId: op.category.id, // Should match category.id
+            timestamp: op.createdAt.toString(),
+            categoryId: op.category.id,
             categoryName: op.category.name,
             authorId: op.author.id,
             userVote,
             commentCount: op.comments.length
         };
-    }).sort((a, b) => b.voteScore - a.voteScore);
+    });
 
     const categoryWithCount = {
         ...category,

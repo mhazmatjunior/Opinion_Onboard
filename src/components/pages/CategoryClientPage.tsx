@@ -16,10 +16,10 @@ import { useRouter, usePathname } from "next/navigation";
 import { useToast } from "@/components/ui/Toast";
 import { Plus, Share2 } from "lucide-react";
 
+import { RecentOpinionsClient } from "@/components/home/RecentOpinionsClient";
+
 export function CategoryClientPage({ category, opinions }: CategoryClientPageProps) {
     const [isPostModalOpen, setIsPostModalOpen] = useState(false);
-    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-    const [reportingOpinionId, setReportingOpinionId] = useState<string | null>(null);
     const { user } = useAuth();
     const { toast } = useToast();
     const router = useRouter();
@@ -34,32 +34,23 @@ export function CategoryClientPage({ category, opinions }: CategoryClientPagePro
     };
 
     const handleShare = async () => {
-        const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}${pathname}` : '';
+        const shareUrl = typeof window !== 'undefined' ? `${window.location.host}${pathname}` : '';
         const shareData = {
             title: `${category.name} - Opinion Onboard`,
             text: `Join the conversation about ${category.name}: ${category.description}`,
-            url: shareUrl,
+            url: `https://${shareUrl}`,
         };
 
         try {
             if (navigator.share) {
                 await navigator.share(shareData);
             } else {
-                await navigator.clipboard.writeText(shareUrl);
+                await navigator.clipboard.writeText(`https://${shareUrl}`);
                 toast("Link copied to clipboard!", "success");
             }
         } catch (err) {
             console.error("Error sharing:", err);
         }
-    };
-
-    const handleReport = (opinionId: string) => {
-        if (!user) {
-            router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
-            return;
-        }
-        setReportingOpinionId(opinionId);
-        setIsReportModalOpen(true);
     };
 
     return (
@@ -90,21 +81,10 @@ export function CategoryClientPage({ category, opinions }: CategoryClientPagePro
             </div>
 
             {/* Feed */}
-            <div className="space-y-6">
-                {opinions.length > 0 ? (
-                    opinions.map((opinion) => (
-                        <OpinionCard
-                            key={opinion.id}
-                            opinion={opinion}
-                            onReport={() => handleReport(opinion.id)}
-                        />
-                    ))
-                ) : (
-                    <div className="text-center py-20 text-muted-foreground bg-muted/20 rounded-lg">
-                        No opinions yet. Be the first to share your thoughts!
-                    </div>
-                )}
-            </div>
+            <RecentOpinionsClient
+                opinions={opinions}
+                categorySlug={category.slug}
+            />
 
             {/* Modals */}
             <PostOpinionModal
@@ -112,15 +92,6 @@ export function CategoryClientPage({ category, opinions }: CategoryClientPagePro
                 onClose={() => setIsPostModalOpen(false)}
                 categoryName={category.name}
                 categoryId={category.id}
-            />
-
-            <ReportModal
-                isOpen={isReportModalOpen}
-                onClose={() => {
-                    setIsReportModalOpen(false);
-                    setReportingOpinionId(null);
-                }}
-                opinionId={reportingOpinionId}
             />
         </div>
     );

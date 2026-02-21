@@ -23,6 +23,7 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const categorySlug = searchParams.get("category");
+    const sortBy = searchParams.get("sort") || "latest"; // "latest" or "top"
 
     try {
         let whereClause = undefined;
@@ -45,18 +46,17 @@ export async function GET(request: Request) {
                 author: true,
                 category: true,
                 votes: true,
-                comments: true, // Also get comments for count
+                comments: true,
             },
-            orderBy: [desc(opinions.createdAt)],
+            orderBy: sortBy === "latest" ? [desc(opinions.createdAt)] : undefined,
         });
 
-        // Format for UI
+        // Format and calculate scores
         const formatted = allOpinions.map((op: any) => {
             const upvotes = op.votes.filter((v: any) => v.type === 'up').length;
             const downvotes = op.votes.filter((v: any) => v.type === 'down').length;
             const score = upvotes - downvotes;
 
-            // Determine user vote
             let userVote: "up" | "down" | null = null;
             if (userId) {
                 const vote = op.votes.find((v: any) => v.userId === userId);
@@ -79,6 +79,13 @@ export async function GET(request: Request) {
                 commentCount: op.comments.length
             };
         });
+
+        // Apply secondary sorting for "top" if requested
+        if (sortBy === "top") {
+            formatted.sort((a, b) => b.voteScore - a.voteScore);
+        }
+
+        return NextResponse.json(formatted);
 
         return NextResponse.json(formatted);
     } catch (error) {
