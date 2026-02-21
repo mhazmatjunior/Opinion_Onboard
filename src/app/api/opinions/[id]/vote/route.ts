@@ -1,6 +1,8 @@
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 import { NextResponse } from "next/server";
+import { headers } from "next/headers";
 import { db } from "@/db";
 import { votes, opinions } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
@@ -16,6 +18,7 @@ export async function POST(
     request: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    await headers();
     const session = await auth();
 
     if (!session || !session.user || !session.user.id) {

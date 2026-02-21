@@ -1,6 +1,8 @@
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 import { NextResponse } from "next/server";
+import { headers } from "next/headers";
 import { db } from "@/db";
 import { opinions, users, categories, votes } from "@/db/schema";
 import { eq, desc, and, ne } from "drizzle-orm";
@@ -15,6 +17,7 @@ const postOpinionSchema = z.object({
 });
 
 export async function GET(request: Request) {
+    await headers();
     const session = await auth();
     const userId = session?.user?.id;
 
@@ -84,6 +87,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+    await headers();
     const session = await auth();
 
     if (!session || !session.user?.id) {

@@ -1,6 +1,8 @@
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 import { NextResponse } from "next/server";
+import { headers } from "next/headers";
 import { db } from "@/db";
 import { comments, opinions } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
@@ -18,6 +20,7 @@ export async function GET(
     request: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    await headers();
     const { id: opinionId } = await params;
 
     try {
@@ -50,6 +53,7 @@ export async function POST(
     request: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    await headers();
     const session = await auth();
 
     if (!session || !session.user?.id) {
