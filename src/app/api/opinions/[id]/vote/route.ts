@@ -1,18 +1,16 @@
 export const dynamic = 'force-dynamic';
+
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { votes } from "@/db/schema";
+import { votes, opinions } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
-import { cookies } from "next/headers";
 import { z } from "zod";
+import { auth } from "@/auth";
 import { triggerNotification } from "@/lib/notifications";
-import { opinions } from "@/db/schema";
 
 const voteSchema = z.object({
     type: z.enum(["up", "down"]),
 });
-
-import { auth } from "@/auth";
 
 export async function POST(
     request: Request,

@@ -1,9 +1,9 @@
 export const dynamic = 'force-dynamic';
+
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { opinions, users, categories, votes } from "@/db/schema";
-import { eq, desc, and } from "drizzle-orm";
-import { cookies } from "next/headers";
+import { eq, desc, and, ne } from "drizzle-orm";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { triggerNotification } from "@/lib/notifications";
