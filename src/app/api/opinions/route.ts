@@ -136,10 +136,11 @@ export async function POST(request: Request) {
             });
 
             for (const recipient of allUsers) {
+                const prefix = isAnonymous ? 'Someone posted a' : 'A';
                 await triggerNotification({
                     userId: recipient.id,
                     type: 'new_opinion',
-                    content: `New opinion in ${category?.name || 'a category'}: "${content.substring(0, 30)}..."`,
+                    content: `${prefix} new opinion in ${category?.name || 'a category'}: "${content.substring(0, 30)}..."`,
                     link: `/opinion/${newOpinion.id}`,
                 });
             }

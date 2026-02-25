@@ -89,10 +89,11 @@ export async function POST(
                 });
 
                 if (parentComment && parentComment.authorId !== userId) {
+                    const displayName = isAnonymous ? 'Someone' : (session.user.name || 'Someone');
                     await triggerNotification({
                         userId: parentComment.authorId,
                         type: 'reply',
-                        content: `${session.user.name || 'Someone'} replied to your comment: "${content.substring(0, 30)}..."`,
+                        content: `${displayName} replied to your comment: "${content.substring(0, 30)}..."`,
                         link: `/opinion/${opinionId}#comment-${newComment[0].id}`,
                     });
                 }
@@ -102,10 +103,11 @@ export async function POST(
                 });
 
                 if (opinion && opinion.authorId !== userId) {
+                    const displayName = isAnonymous ? 'Someone' : (session.user.name || 'Someone');
                     await triggerNotification({
                         userId: opinion.authorId,
                         type: 'reply',
-                        content: `${session.user.name || 'Someone'} commented on your opinion: "${content.substring(0, 30)}..."`,
+                        content: `${displayName} commented on your opinion: "${content.substring(0, 30)}..."`,
                         link: `/opinion/${opinionId}#comment-${newComment[0].id}`,
                     });
                 }

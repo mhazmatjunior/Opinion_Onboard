@@ -71,7 +71,7 @@ export async function POST(
                         await triggerNotification({
                             userId: opinion.authorId,
                             type: 'upvote',
-                            content: `${session.user.name || 'Someone'} upvoted your opinion: "${opinion.content.substring(0, 30)}..."`,
+                            content: `Someone upvoted your opinion: "${opinion.content.substring(0, 30)}..."`,
                             link: `/opinion/${opinionId}`,
                         });
                     }
